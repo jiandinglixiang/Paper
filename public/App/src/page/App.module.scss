@@ -1,0 +1,14 @@
+.app-page {
+  overflow: hidden;
+  display: block;
+  width: 100%;
+}
+
+.nav-index {
+  position: fixed;
+  z-index: 1;
+  width: 100%;
+  max-width: 640px;
+  bottom: 0;
+  overflow: hidden;
+}

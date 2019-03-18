@@ -1,0 +1,20 @@
+.home {
+  width: 100%;
+  margin-bottom: 60px;
+}
+
+.content-img {
+  display: flex;
+  flex-flow: row nowrap;
+  align-items: center;
+
+  > img {
+    display: inline-block;
+    width: 80px;
+    height: 80px;
+  }
+
+  > p {
+    margin-left: 5px;
+  }
+}
