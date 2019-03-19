@@ -3,13 +3,13 @@ import { Icon, InputItem, List, NavBar } from 'antd-mobile'
 import style from './setting.module.scss'
 import { createForm } from 'rc-form'
 
-let moneyKeyboardWrapProps
-const isIPhone = new RegExp('\\biPhone\\b|\\biPod\\b', 'i').test(window.navigator.userAgent)
-if (isIPhone) {
-  moneyKeyboardWrapProps = {
-    onTouchStart: e => e.preventDefault(),
-  }
-}
+// let moneyKeyboardWrapProps
+// const isIPhone = new RegExp('\\biPhone\\b|\\biPod\\b', 'i').test(window.navigator.userAgent)
+// if (isIPhone) {
+//   moneyKeyboardWrapProps = {
+//     onTouchStart: e => e.preventDefault(),
+//   }
+// }
 
 const From = createForm()(function (props) {
   const { getFieldProps } = props.form
