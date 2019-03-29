@@ -19,4 +19,11 @@ var sequelize = new Sequelize(config.database, config.username, config.password,
   timestamps: false
   //最好关掉timestamps , 框架自动帮你添加时间到UpdatedAt上边
 })
+db.authenticate()
+  .then(() => {
+    console.log('Connection has been established successfully.')
+  })
+  .catch(err => {
+    console.error('Unable to connect to the database:', err)
+  })
 module.exports = sequelize

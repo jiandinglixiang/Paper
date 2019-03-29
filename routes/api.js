@@ -1,14 +1,14 @@
 var express = require('express')
 var router = express.Router()
-const db = require('../tool.js');
+const db = require('../tool.js')
 
 db.authenticate()
   .then(() => {
-    console.log('Connection has been established successfully.');
+    console.log('Connection has been established successfully.')
   })
   .catch(err => {
-    console.error('Unable to connect to the database:', err);
-  });
+    console.error('Unable to connect to the database:', err)
+})
 
 router.post('/register', function (req, res, next) {
   //注册
