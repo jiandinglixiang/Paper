@@ -1,23 +1,15 @@
 var express = require('express')
 var router = express.Router()
-var mysql = require('mysql')
-var connection = mysql.createConnection({
-  host: 'localhost',
-  user: 'root',
-  password: '123456',
-  database: 'test',
-  port: 3310
-})
+const db = require('../tool.js');
 
-connection.connect()
+db.authenticate()
+  .then(() => {
+    console.log('Connection has been established successfully.');
+  })
+  .catch(err => {
+    console.error('Unable to connect to the database:', err);
+  });
 
-connection.query('SELECT 1 + 1 AS solution', function (err, rows, fields) {
-  if (err) throw err
-
-  console.log('The solution is: ', rows[0].solution)
-
-  connection.end()
-})
 router.post('/register', function (req, res, next) {
   //注册
   res.send('respond with a')

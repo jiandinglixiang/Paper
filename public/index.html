@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+<script>
+  function ff (length) {
+    function f1 (ii, w) {
+      let z = 1
+      let q = w
+      let d = 1
+      for (let i = ii; i > 0; i--) {
+        z *= q
+        q--
+        d *= i
+      }
+      return z / d
+    }
+
+    if (length < 2 || length > 8) return
+    let arr = []
+    for (let i = 2; i <= length; i++) {
+      arr.push({ [i + '*1']: f1(i, length) })
+    }
+    return arr
+  }
+
+  //先算出三位数字的排列个数：4*3*2=24
+  //i * (i - 1)*(i - 2)
+
+  console.log(ff(5))
+  var data = ['1', '2', '3', '4']
+
+  function getGroup (data, index = 0, group = []) {
+    const Arr = []
+    Arr.push(data[index])
+    for (var i = 0; i < group.length; i++) {
+      Arr.push([...group[i], ...data[index]])
+    }
+    group.push(...Arr)
+    if (index + 1 >= data.length) {
+      return group
+    } else {
+      return getGroup(data, index + 1, group)
+    }
+  }
+
+  console.log(getGroup(data))
+
+</script>
+</body>
+</html>
