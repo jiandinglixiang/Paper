@@ -41,6 +41,62 @@ const Users = db.define('users', {
 }, {
   timestamps: false
 })
+router.get('/searchList', function (req, res) {
+  // 获取个人信息
+  const query = req.query
+  if (!query.search) {
+    res.send({
+      code: 1,
+      msg: '没有搜索内容',
+      data: {}
+    })
+    return
+  }
+  console.log(query)
+  User.findAll({
+    offset: query.offset * 1 || 0,
+    limit: query.limit * 1 || 10,
+    order: db.random(),
+    where: {
+      status: 0,
+      [Op.or]: [{
+        title: { [Op.like]: `%${query.search}%` }
+      }, {
+        content: { [Op.like]: `%${query.search}%` },
+      }]
+    }
+  }).then(result => {
+    let list = []
+    if (result && result.length) {
+      list = result.map(val => {
+        return {
+          'id': val.id,
+          'img': val.imgList.split(',')[0],
+          'content': val.content,
+          'title': val.title,
+          'price': val.price,
+          'LookNumber': val.LookNumber,
+          'info': {
+            'portrait': val.info_portrait,
+            'name': val.info_name
+          }
+        }
+      })
+    }
+    res.send({
+      code: 0,
+      msg: '成功',
+      data: list
+    })
+  }).catch(value => {
+    console.log(value)
+    res.send({
+      code: 1,
+      msg: '没有内容',
+      data: {}
+    })
+  })
+})
 router.get('/swipeList', function (req, res) {
   // 获取个人信息
   const query = req.query
