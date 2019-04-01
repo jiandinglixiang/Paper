@@ -41,8 +41,7 @@ router.post('/register', upload.array(), function (req, res, next) {
           balance: '0',
           identity
         }).then(function (result) {
-          console.log(result)
-          const tokens = setToken(md5(`${phone}${password}`), JSON.parse(JSON.stringify(result[0].dataValues)))
+          const tokens = setToken(md5(`${phone}${password}`), JSON.parse(JSON.stringify(result.dataValues)))
           res.json({
             code: 0,
             msg: '成功',
@@ -89,7 +88,7 @@ router.post('/login', upload.array(), function (req, res, next) {
         phone
       }
     }).then(function (result) {
-      if (result.length && result[0].dataValues.password === password) {
+      if (result && result[0] && result[0].dataValues.password === password) {
         const tokens = setToken(md5(`${phone}${password}`), JSON.parse(JSON.stringify(result[0].dataValues)))
         res.json({
           code: 0,
@@ -152,13 +151,13 @@ router.get('/info', function (req, res, next) {
         code: 0,
         msg: '成功',
         data: {
-          id: result[0].id,
-          portrait: result[0].portrait,
-          name: result[0].name,
-          phone: result[0].phone,
-          location: result[0].location,
-          balance: result[0].balance,
-          identity: result[0].identity
+          id: result[0].dataValues.id,
+          portrait: result[0].dataValues.portrait,
+          name: result[0].dataValues.name,
+          phone: result[0].dataValues.phone,
+          location: result[0].dataValues.location,
+          balance: result[0].dataValues.balance,
+          identity: result[0].dataValues.identity
         }
       })
       return
@@ -258,7 +257,7 @@ router.post('/pushFile', multer({ dest: 'public/images/' }).fields([
           fs.rename(file[index][0].path, newname, function (err) {
             if (!err) {
               console.log(file[index][0])
-              resolve('http://237930h98r.zicp.vip/images/' + file[index][0].filename + pathLib.parse(file[index][0].originalname).ext)
+              resolve('http://127.0.0.1/images/' + file[index][0].filename + pathLib.parse(file[index][0].originalname).ext)
             } else {
               resolve('http://iph.href.lu/100x100?text=错误')
             }

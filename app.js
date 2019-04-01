@@ -8,6 +8,7 @@ var history = require('connect-history-api-fallback')
 var indexRouter = require('./routes/index')
 var apiRouter = require('./routes/api')
 var apiRouter2 = require('./routes/order')
+var apiRouter3 = require('./routes/leaveWord')
 var bodyParser = require('body-parser')
 
 const app = express()
@@ -38,7 +39,7 @@ app.all('*', function (req, res, next) {
     next()
   }
 })
-app.use('/api/', apiRouter, apiRouter2)
+app.use('/api/', apiRouter, apiRouter2, apiRouter3)
 app.use(history({
   htmlAcceptHeaders: ['text/html', 'application/xhtml+xml']
 }))

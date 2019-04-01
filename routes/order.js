@@ -162,9 +162,9 @@ router.post('/publishItem', upload.array(), function (req, res) {
         content: body.content,
         brandNew: body.brandNew,
         price: body.price,
-        info_id: result[0].id,
-        info_name: result[0].name,
-        info_portrait: result[0].portrait
+        info_id: result[0].dataValues.id,
+        info_name: result[0].dataValues.name,
+        info_portrait: result[0].dataValues.portrait
       })
     }
     return Promise.reject('错误1')
@@ -202,7 +202,7 @@ router.get('/publish', function (req, res) {
   case '+1':
     status = {
       status: {
-        [Op.gte]: 1
+        [Op.or]: [1, 2, 4, 5]
       },
       logistics_id: token.id
     }
@@ -210,14 +210,13 @@ router.get('/publish', function (req, res) {
   case '-1':
     status = {
       status: {
-        [Op.gte]: 1
+        [Op.or]: [1, 2, 4, 5]
       },
       info_id: token.id
     }
     break
   case '+0':
     status = {
-      status: 0,
       info_id: token.id
     }
     break
@@ -286,36 +285,36 @@ router.get('/CommodityDetails', function (req, res) {
   }).then(result => {
     if (!(result && result[0])) return Promise.reject('无内容')
     return User.update({
-      LookNumber: result[0].LookNumber++
+      LookNumber: result[0].dataValues.LookNumber * 1 + 1
     }, {
       where: {
         id: query.id
       }
     }).then(value => {
       const data = {
-        id: result[0].id,
-        imgList: result[0].imgList.split(','),
-        content: result[0].content,
-        title: result[0].title,
-        price: result[0].price,
-        LookNumber: result[0].LookNumber,
-        status: result[0].status,//0代表发布,1代表支付了,2代表发货了,3代表取消发布了,4代表完成,5代表纠纷由后台处理
-        brandNew: result[0].brandNew,// 全新
+        id: result[0].dataValues.id,
+        imgList: result[0].dataValues.imgList.split(','),
+        content: result[0].dataValues.content,
+        title: result[0].dataValues.title,
+        price: result[0].dataValues.price,
+        LookNumber: result[0].dataValues.LookNumber * 1 + 1,
+        status: result[0].dataValues.status,//0代表发布,1代表支付了,2代表发货了,3代表取消发布了,4代表完成,5代表纠纷由后台处理
+        brandNew: result[0].dataValues.brandNew,// 全新
         info: {
-          id: result[0].info_id,
-          portrait: result[0].info_portrait,
-          name: result[0].info_name
+          id: result[0].dataValues.info_id,
+          portrait: result[0].dataValues.info_portrait,
+          name: result[0].dataValues.info_name
         }
       }
-      if (token && (token.id === result[0].info_id || (result[0].logistics_id && token.id === result[0].logistics_id))) {
+      if (token && (token.id === result[0].dataValues.info_id || (result[0].dataValues.logistics_id && token.id === result[0].dataValues.logistics_id))) {
         data.logistics = {
-          id: result[0].logistics_id,
-          odd: result[0].logistics_odd,
-          oddName: result[0].logistics_oddName,
-          name: result[0].logistics_name,
-          phone: result[0].logistics_phone,
-          location: result[0].logistics_location,
-          portrait: result[0].logistics_portrait
+          id: result[0].dataValues.logistics_id,
+          odd: result[0].dataValues.logistics_odd,
+          oddName: result[0].dataValues.logistics_oddName,
+          name: result[0].dataValues.logistics_name,
+          phone: result[0].dataValues.logistics_phone,
+          location: result[0].dataValues.logistics_location,
+          portrait: result[0].dataValues.logistics_portrait
         }
       }
       return res.send({
@@ -382,7 +381,7 @@ router.post('/purchase', upload.array(), function (req, res) {
         })
         return
       }
-      if (order.dataValues.price < info.dataValues.balance) {
+      if (order.dataValues.price * 1 > info.dataValues.balance) {
         res.send({
           code: 2,
           msg: '余额不足',
@@ -426,6 +425,7 @@ router.post('/purchase', upload.array(), function (req, res) {
 })
 router.post('/delTreasure', upload.array(), function (req, res) {
   // 下架
+  // 0代表发布,1代表支付了,2代表发货了,3代表取消发布了,4代表完成,5代表纠纷由后台处理
   const body = req.body
   let token = getToken(body.token)
   if (!token) {
@@ -445,60 +445,21 @@ router.post('/delTreasure', upload.array(), function (req, res) {
     return
   }
 
-  Promise.all([
-    Users.findAll({
-      where: {
-        id: token.id,
-        phone: token.phone
-      }
-    }),
-    User.findAll({
+  User.findAll({
+    where: {
+      id: body.id,
+      info_id: token.id,
+      status: 0
+    }
+  }).then(result => {
+    const order = result[0]
+    if (!order) return Promise.reject('错误1')
+    return User.update({ status: 3 }, {
       where: {
         id: body.id,
-        info_id: {
-          [Op.ne]: token.id
-        },
-        status: 0,
+        info_id: token.id
       }
-    })]).then(result => {
-    const info = result[0] && result[0][0]
-    const order = result[1] && result[1][0]
-    if (info && order) {
-      token = setToken(body.token, JSON.parse(JSON.stringify(info.dataValues)))
-      if (!token.location) {
-        res.send({
-          code: 1,
-          msg: '地址错误',
-          data: {}
-        })
-        return
-      }
-      if (order.dataValues.price < info.dataValues.balance) {
-        res.send({
-          code: 2,
-          msg: '余额不足',
-          data: {}
-        })
-        return
-      }
-      return Promise.all([
-        User.update({
-          status: 1,
-          logistics_id: info.dataValues.id,
-          logistics_name: info.dataValues.name,
-          logistics_phone: info.dataValues.phone,
-          logistics_location: info.dataValues.location,
-          logistics_portrait: info.dataValues.portrait
-        }, { where: { id: body.id } }),
-        Users.update({ balance: info.dataValues.balance - order.dataValues.price }, {
-          where: {
-            id: token.id,
-            phone: token.phone
-          }
-        })
-      ])
-    }
-    return Promise.reject('错误1')
+    })
   }).then(function (result) {
     console.log(result)
     res.send({
@@ -510,13 +471,14 @@ router.post('/delTreasure', upload.array(), function (req, res) {
     console.log(err)
     res.send({
       code: 1,
-      msg: '错误',
+      msg: '错误2',
       data: {}
     })
   })
 })
 router.post('/amendExpressage', upload.array(), function (req, res) {
   // 物流修改
+  // 0代表发布,1代表支付了,2代表发货了,3代表取消发布了,4代表完成,5代表纠纷由后台处理
   const body = req.body
   let token = getToken(body.token)
   if (!token) {
@@ -527,7 +489,7 @@ router.post('/amendExpressage', upload.array(), function (req, res) {
     })
     return
   }
-  if (!body.id) {
+  if (!body.odd || !body.oddName || !body.id) {
     res.send({
       code: 1,
       msg: '参数错误',
@@ -535,61 +497,24 @@ router.post('/amendExpressage', upload.array(), function (req, res) {
     })
     return
   }
-
-  Promise.all([
-    Users.findAll({
-      where: {
-        id: token.id,
-        phone: token.phone
-      }
-    }),
-    User.findAll({
-      where: {
-        id: body.id,
-        info_id: {
-          [Op.ne]: token.id
-        },
-        status: 0,
-      }
-    })]).then(result => {
-    const info = result[0] && result[0][0]
-    const order = result[1] && result[1][0]
-    if (info && order) {
-      token = setToken(body.token, JSON.parse(JSON.stringify(info.dataValues)))
-      if (!token.location) {
-        res.send({
-          code: 1,
-          msg: '地址错误',
-          data: {}
-        })
-        return
-      }
-      if (order.dataValues.price < info.dataValues.balance) {
-        res.send({
-          code: 2,
-          msg: '余额不足',
-          data: {}
-        })
-        return
-      }
-      return Promise.all([
-        User.update({
-          status: 1,
-          logistics_id: info.dataValues.id,
-          logistics_name: info.dataValues.name,
-          logistics_phone: info.dataValues.phone,
-          logistics_location: info.dataValues.location,
-          logistics_portrait: info.dataValues.portrait
-        }, { where: { id: body.id } }),
-        Users.update({ balance: info.dataValues.balance - order.dataValues.price }, {
-          where: {
-            id: token.id,
-            phone: token.phone
-          }
-        })
-      ])
-    }
-    return Promise.reject('错误1')
+  const where = {
+    id: body.id, // 商品id
+    status: {
+      [Op.or]: [1, 2]
+    }, // 状态只能是支付后和发货了
+    info_id: token.id, // 发布者必须是自己
+    logistics_id: {
+      [Op.ne]: null,
+    } // 不能没有购买者
+  }
+  User.findAll({ where }).then(result => {
+    const order = result && result[0]
+    if (!order) return Promise.reject('错误1')
+    return User.update({
+      status: 2,
+      logistics_odd: body.odd,
+      logistics_oddName: body.oddName
+    }, { where })
   }).then(function (result) {
     console.log(result)
     res.send({
@@ -607,7 +532,8 @@ router.post('/amendExpressage', upload.array(), function (req, res) {
   })
 })
 router.post('/confirmExpressage', upload.array(), function (req, res) {
-  // 物流修改
+  // 确认收货
+  // 0代表发布,1代表支付了,2代表发货了,3代表取消发布了,4代表完成,5代表纠纷由后台处理
   const body = req.body
   let token = getToken(body.token)
   if (!token) {
@@ -626,61 +552,15 @@ router.post('/confirmExpressage', upload.array(), function (req, res) {
     })
     return
   }
-
-  Promise.all([
-    Users.findAll({
-      where: {
-        id: token.id,
-        phone: token.phone
-      }
-    }),
-    User.findAll({
-      where: {
-        id: body.id,
-        info_id: {
-          [Op.ne]: token.id
-        },
-        status: 0,
-      }
-    })]).then(result => {
-    const info = result[0] && result[0][0]
-    const order = result[1] && result[1][0]
-    if (info && order) {
-      token = setToken(body.token, JSON.parse(JSON.stringify(info.dataValues)))
-      if (!token.location) {
-        res.send({
-          code: 1,
-          msg: '地址错误',
-          data: {}
-        })
-        return
-      }
-      if (order.dataValues.price < info.dataValues.balance) {
-        res.send({
-          code: 2,
-          msg: '余额不足',
-          data: {}
-        })
-        return
-      }
-      return Promise.all([
-        User.update({
-          status: 1,
-          logistics_id: info.dataValues.id,
-          logistics_name: info.dataValues.name,
-          logistics_phone: info.dataValues.phone,
-          logistics_location: info.dataValues.location,
-          logistics_portrait: info.dataValues.portrait
-        }, { where: { id: body.id } }),
-        Users.update({ balance: info.dataValues.balance - order.dataValues.price }, {
-          where: {
-            id: token.id,
-            phone: token.phone
-          }
-        })
-      ])
-    }
-    return Promise.reject('错误1')
+  const where = {
+    id: body.id, // 商品id
+    status: 2, // 状态只能是支付后和发货了
+    logistics_id: token.id // 购买者必须是自己
+  }
+  User.findAll({ where }).then(result => {
+    const order = result && result[0]
+    if (!order) return Promise.reject('错误1')
+    return User.update({ status: 4 }, { where })
   }).then(function (result) {
     console.log(result)
     res.send({
