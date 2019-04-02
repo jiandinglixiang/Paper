@@ -1,4 +1,4 @@
-const express = require('express')
+﻿const express = require('express')
 const { setToken, getToken } = require('../state/token')
 const router = express.Router()
 var pathLib = require('path')
@@ -257,7 +257,7 @@ router.post('/pushFile', multer({ dest: 'public/images/' }).fields([
           fs.rename(file[index][0].path, newname, function (err) {
             if (!err) {
               console.log(file[index][0])
-              resolve('http://237930h98r.zicp.vip/images/' + file[index][0].filename + pathLib.parse(file[index][0].originalname).ext)
+              resolve('http://47.101.221.9/images/' + file[index][0].filename + pathLib.parse(file[index][0].originalname).ext)
             } else {
               resolve('http://iph.href.lu/100x100?text=错误')
             }
